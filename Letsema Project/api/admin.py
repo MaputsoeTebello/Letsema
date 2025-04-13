@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import  Borrower, Loan, CreditHistory, CreditTransaction,RepaymentSchedule, Installment, Payment, LoanOfficer
-
+from .models import  Borrower, Loan, CreditHistory, CreditTransaction,RepaymentSchedule, Installment, Payment
    
 
 @admin.register(Borrower)
@@ -54,9 +53,3 @@ class PaymentAdmin(admin.ModelAdmin):
     list_display = ('installment', 'amount', 'payment_date', 'payment_method', 'reference_number')
     list_filter = ('payment_method', 'payment_date')
     search_fields = ('installment__repayment_schedule__loan__borrower__name', 'reference_number')
-    
-@admin.register(LoanOfficer)
-class LoanOfficerAdmin(admin.ModelAdmin):
-    list_display = ('user', 'employee_id', 'position', 'hire_date')
-    search_fields = ('user__username', 'employee_id', 'position')
-

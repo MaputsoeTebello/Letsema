@@ -47,6 +47,19 @@ class RegisterBorrowerView(APIView):
         serializer = BorrowerSerializer(data=request.data)
         if serializer.is_valid():
             borrower = serializer.save()
+            
+            # Optional: Store additional data in MongoDB
+            mongo_data = {
+                "borrower_id": borrower.id,
+                "additional_info": request.data.get("additional_info", {}),
+                "created_at": borrower.created_at
+            }
+            try:
+                if hasattr(settings, 'MONGO_DB'):
+                    settings.MONGO_DB.borrowers.insert_one(mongo_data)
+            except Exception as e:
+                logger.error(f"MongoDB insertion failed: {str(e)}")
+
             return Response({
                 "message": "Borrower registered successfully!",
                 "data": serializer.data

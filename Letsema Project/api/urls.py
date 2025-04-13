@@ -34,5 +34,4 @@ urlpatterns = [
     path('payments/<int:installment_id>/', PaymentView.as_view(), name='installment_payments'),
     path('overdue-installments/', OverdueInstallmentsView.as_view(), name='overdue_installments'),
     path('borrower-repayments/<int:borrower_id>/', BorrowerRepaymentView.as_view(), name='borrower_repayments'),
-    path('api/register/', RegisterBorrowerView.as_view(), name='register_borrower'),
 ]
