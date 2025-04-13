@@ -1,15 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 import datetime
- 
+
 class Borrower(models.Model):
     name = models.CharField(max_length=100)
     id_number = models.CharField(max_length=20, unique=True)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15)
+    district = models.CharField(max_length=100, default='Maseru')  # Added district field
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -29,22 +29,16 @@ class Loan(models.Model):
     interest_rate = models.DecimalField(max_digits=5, decimal_places=2)
     term_months = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  
-    # Add any additional fields
-  
-
-# Modified fields for Loan model
     purpose = models.TextField(blank=True, null=True)  # Purpose of the loan
-    application_date = models.DateTimeField(default=timezone.now)  # Use default instead of auto_now_add
+    application_date = models.DateTimeField(default=timezone.now)
     approval_date = models.DateTimeField(null=True, blank=True)
     disbursement_date = models.DateTimeField(null=True, blank=True)
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return f"Loan for {self.borrower.name} - {self.amount}"
         
-    # You might want to add methods for calculating repayment schedule
     def calculate_monthly_payment(self):
         # Simple calculation (principal + interest) / term_months
         principal = float(self.amount)
@@ -58,11 +52,7 @@ class Loan(models.Model):
             monthly_payment = principal / term
             
         return round(monthly_payment, 2)
-        
-        # Add these imports if not already present
 
-
-# Add these new models
 class CreditHistory(models.Model):
     borrower = models.OneToOneField(Borrower, on_delete=models.CASCADE, related_name='credit_history')
     score = models.IntegerField(
@@ -96,8 +86,6 @@ class CreditTransaction(models.Model):
     class Meta:
         ordering = ['-transaction_date']
 
-
-# Add these new models
 class RepaymentSchedule(models.Model):
     loan = models.OneToOneField(Loan, on_delete=models.CASCADE, related_name='repayment_schedule')
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -185,5 +173,26 @@ class Payment(models.Model):
         elif total_paid > 0:
             installment.status = 'partially_paid'
         installment.save()
-        
-        
+
+# Add Institution model for MFIs
+#class Institution(models.Model):
+ #   name = models.CharField(max_length=255)
+  #  district = models.CharField(max_length=100)
+   # address = models.TextField(blank=True)
+    #contact_phone = models.CharField(max_length=50, blank=True)
+   # contact_email = models.EmailField(blank=True)
+   # status = models.CharField(max_length=50, default='active')
+   # created_at = models.DateTimeField(auto_now_add=True)
+
+   # def __str__(self):
+    #    return self.name
+
+# Add LoanOfficer model
+class LoanOfficer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    employee_id = models.CharField(max_length=100, unique=True)
+    position = models.CharField(max_length=100, blank=True)
+    hire_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.first_name} {self.user.last_name}"
