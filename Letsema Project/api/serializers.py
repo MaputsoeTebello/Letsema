@@ -1,12 +1,35 @@
-      
 from rest_framework import serializers
-from .models import Borrower, Loan , CreditTransaction , CreditHistory , Payment , Installment , RepaymentSchedule
+from django.contrib.auth.models import User
+from .models import Borrower, Loan, CreditTransaction, CreditHistory, Payment, Installment, RepaymentSchedule, LoanOfficer
+
+# Add UserSerializer for the nested relationship in LoanOfficerSerializer
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        read_only_fields = ['id']
+
+# Add LoanOfficerSerializer
+class LoanOfficerSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    
+    # For write operations
+    user_id = serializers.PrimaryKeyRelatedField(
+        source='user',
+        queryset=User.objects.all(),
+        write_only=True
+    )
+    
+    class Meta:
+        model = LoanOfficer
+        fields = ['id', 'user', 'user_id', 'employee_id', 'position', 'hire_date']
+        read_only_fields = ['id']
 
 class BorrowerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrower
-        fields = ['id', 'name', 'id_number', 'email', 'phone', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'name', 'id_number', 'email', 'phone', 'district', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 class LoanSerializer(serializers.ModelSerializer):
     borrower_name = serializers.ReadOnlyField(source='borrower.name')
@@ -16,18 +39,17 @@ class LoanSerializer(serializers.ModelSerializer):
         model = Loan
         fields = ['id', 'borrower', 'borrower_name', 'amount', 'interest_rate', 
                   'term_months', 'purpose', 'status', 'monthly_payment', 
-                  'approval_date', 'disbursement_date', 'created_at']
-        read_only_fields = ['id', 'approval_date', 'disbursement_date', 'created_at']
+                  'application_date', 'approval_date', 'disbursement_date', 
+                  'created_at', 'updated_at']
+        read_only_fields = ['id', 'approval_date', 'disbursement_date', 'created_at', 'updated_at']
     
     def get_monthly_payment(self, obj):
         return obj.calculate_monthly_payment()
-        
-        
-        # Add these serializers to your existing serializers.py file
+
 class CreditTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CreditTransaction
-        fields = ['id', 'transaction_date', 'description', 'amount', 
+        fields = ['id', 'credit_history', 'transaction_date', 'description', 'amount', 
                   'transaction_type', 'is_paid']
         read_only_fields = ['id']
 
@@ -39,8 +61,7 @@ class CreditHistorySerializer(serializers.ModelSerializer):
         model = CreditHistory
         fields = ['id', 'borrower', 'borrower_name', 'score', 'last_updated', 'transactions']
         read_only_fields = ['id', 'last_updated']
-        
-        # Add these serializers to your existing serializers.py file
+
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
@@ -55,7 +76,7 @@ class InstallmentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Installment
-        fields = ['id', 'installment_number', 'due_date', 'amount', 'status', 
+        fields = ['id', 'repayment_schedule', 'installment_number', 'due_date', 'amount', 'status', 
                   'payments', 'total_paid', 'remaining_amount']
         read_only_fields = ['id', 'installment_number', 'due_date', 'amount']
     
